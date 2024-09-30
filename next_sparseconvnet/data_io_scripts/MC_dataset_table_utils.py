@@ -38,7 +38,8 @@ def get_MCtables(filename, config, start_id=0):
     if config.classification and config.segmentation:
         hits = utils.add_clf_seg_labels(hits, particles, delta_t=config.blob_delta_t, delta_e=config.blob_delta_e)
     elif config.classification:
-        hits = utils.add_clf_labels(hits, particles)
+        #hits = utils.add_clf_labels(hits, particles)
+        hits = utils.add_clf_labels_filename(hits, basename)
     elif config.segmentation:
         hits = utils.add_seg_labels(hits, particles, delta_t=config.blob_delta_t, delta_e=config.blob_delta_e)
     else:

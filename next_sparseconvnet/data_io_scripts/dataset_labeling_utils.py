@@ -49,6 +49,26 @@ def add_clf_labels(hits, particles):
     clf_labels.name = 'binclass'
     return hits.merge(clf_labels, left_index=True, right_index=True).reset_index()[['event_id', 'x', 'y', 'z', 'energy', 'binclass']]
 
+def add_clf_labels_filename(hits, basename):
+    # Check if the file contains '0nubb' or '1eroi' in its name
+    if '0nubb' in basename:
+        binclass = 1  # Signal
+        print("CLASSIFYING AS SIGNAL")
+    elif '1eroi' in basename:
+        binclass = 0  # Background
+        print("CLASSIFYING AS BACKGROUND")
+    else:
+        raise ValueError(f"Filename {basename} does not contain '0nubb' or '1eroi'")
+
+    # Reset the index to move 'event_id', 'particle_id', and 'hit_id' into columns
+    hits = hits.reset_index()
+
+    # Add a 'binclass' column to the hits DataFrame, assigning the same label to all rows
+    hits['binclass'] = binclass
+
+    # Return the updated hits DataFrame with the classification labels
+    return hits[['event_id', 'x', 'y', 'z', 'energy', 'binclass']]
+
 
 def add_seg_labels(hits, particles, delta_t=None, delta_e=None, label_dict={'track':1, 'blob':2, 'rest':0}):
     label_dict={'track':1, 'blob':2, 'rest':0}

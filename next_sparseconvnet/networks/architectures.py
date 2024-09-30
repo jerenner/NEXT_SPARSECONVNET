@@ -255,7 +255,7 @@ class ResNet(torch.nn.Module):
         self.linear2 = torch.nn.Linear(nlinear, nclasses)
         self.activation = torch.nn.ReLU()
 
-    def forward(self, x):
+    def forward(self, coord, features, batch_size):
         '''
         Passes x through the net.
 
@@ -271,6 +271,11 @@ class ResNet(torch.nn.Module):
             A tensor with size [features_number, nclasses].
 
         '''
+        #print(f"-- Inside model with batch size: {batch_size}")
+        #print(f"--> Coord = {coord}")
+        #print(f"--> features = {features}")
+        #print(f"--> coord device: {coord.device}, features device: {features.device}, batch_size: {batch_size}")
+        x = (coord, features, batch_size)
         x = self.inp(x)
         x = self.convBN(x)
 

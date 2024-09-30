@@ -87,6 +87,8 @@ def collatefn(batch):
     energs = torch.tensor(np.concatenate(energs, axis=0), dtype = torch.float).unsqueeze(-1)
     labels = torch.tensor(np.concatenate(labels, axis=0), dtype = torch.long)
 
+    #print(f"COLLATEFN: coords shape: {coords.shape}, energs shape: {energs.shape}, labels shape: {labels.shape}, events shape: {events.shape}")
+
     return  coords, energs, labels, events
 
 
@@ -172,7 +174,7 @@ def read_events_info(filename, nevents):
     events = load_dst(filename, 'DATASET', 'EventsInfo')
     if nevents is not None:
         if nevents>=len(events):
-            warnings.warn(UserWarning(f'length of dataset smaller than {nevents}, using full dataset'))
+            warnings.warn(UserWarning(f'length of dataset smaller than {nevents}, using full dataset of length {len(events)}'))
         else:
             events = events.iloc[:nevents]
 

@@ -29,6 +29,62 @@ from next_sparseconvnet.utils.train_utils      import train_net
 from next_sparseconvnet.utils.train_utils      import predict_gen
 from next_sparseconvnet.utils.focal_loss       import FocalLoss
 
+from torch.nn.parallel.scatter_gather import scatter
+
+# Custom DataParallel
+class CustomDataParallel(torch.nn.DataParallel):
+    def scatter(self, inputs, kwargs, device_ids):
+        #print(f"*** Scattering inputs {inputs} over devices {device_ids}")
+        scattered_inputs = custom_scatter(inputs, device_ids, dim=0)
+        scattered_kwargs = [{} for _ in range(len(scattered_inputs))]
+        return scattered_inputs, scattered_kwargs
+
+def custom_scatter(inputs, target_gpus, dim=0):
+    """
+    Custom scatter function to split SparseConvNet inputs based on batch index.
+    Ensures that the `coords` tensor (with batch index in the last column) is split
+    by grouping all coordinates that share the same batch index and distributing
+    them across GPUs.
+
+    Inputs:
+    - inputs: Tuple of (coords, features, batch_size)
+    - target_gpus: List of GPU ids
+    - dim: The dimension along which to split (default is 0)
+    
+    Returns:
+    - Scattered inputs (coords, features) for each GPU.
+    """
+    coords, features, batch_size = inputs
+
+    # Get the batch indices from the last column of coords
+    batch_indices = coords[:, -1].unique(sorted=True)
+
+    # Split the batch indices across GPUs
+    num_gpus = len(target_gpus)
+    splits = torch.chunk(batch_indices, num_gpus)
+
+    scattered_inputs = []
+    
+    # For each GPU, gather the corresponding coords and features
+    for i,split in enumerate(splits):
+        mask = coords[:, -1].unsqueeze(1) == split.unsqueeze(0)
+        mask = mask.any(dim=1)
+        
+        scattered_coords = coords[mask]
+        scattered_features = features[mask]
+
+        # Re-index the batch indices on each GPU to be from 0 to (batch_size_per_gpu - 1)
+        scattered_coords[:, -1] = scattered_coords[:, -1] - scattered_coords[:, -1].min()
+        #print(f"New scattered coords are {scattered_coords}")
+
+        # Move tensors to the correct device (GPU)
+        scattered_coords = scattered_coords.to(target_gpus[i])
+        scattered_features = scattered_features.to(target_gpus[i])
+
+        scattered_inputs.append((scattered_coords, scattered_features, int(batch_size/num_gpus)))
+
+    return scattered_inputs
+
 def is_valid_action(parser, arg):
     if not arg in ['train', 'predict']:
         parser.error("The action %s is not allowed!" % arg)
@@ -89,6 +145,10 @@ if __name__ == '__main__':
                      parameters.basic_num,
                      momentum = parameters.momentum,
                      nlinear = parameters.nlinear)
+        # Check for multiple GPUs
+        if torch.cuda.device_count() > 1:
+            print(f"Using {torch.cuda.device_count()} GPUs!")
+            net = CustomDataParallel(net, device_ids=[0, 1, 2, 3])
         net = net.cuda()
 
     print('net constructed')
@@ -124,9 +184,9 @@ if __name__ == '__main__':
             weights = None
 
         if isfocal:
-            criterion = FocalLoss(alpha=weights, gamma=2.)
+            criterion = FocalLoss(alpha=weights, gamma=2.).cuda()
         else:
-            criterion = torch.nn.CrossEntropyLoss(weight = weights)
+            criterion = torch.nn.CrossEntropyLoss(weight = weights).cuda()
 
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()),
                                      lr = parameters.lr,

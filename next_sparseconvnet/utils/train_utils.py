@@ -38,13 +38,17 @@ def train_one_epoch(epoch_id, net, criterion, optimizer, loader, label_type, ncl
         metrics = accuracy
         met_epoch = 0
     for batchid, (coord, ener, label, event) in enumerate(loader):
+        print(f"PROCESSING BATCH {batchid}")
         batch_size = len(event)
         if use_cuda:
-            ener, label = ener.cuda(), label.cuda()
+            coord, ener, label = coord.cuda(), ener.cuda(), label.cuda()
 
         optimizer.zero_grad()
+        output = net(coord, ener, batch_size)
 
-        output = net.forward((coord, ener, batch_size))
+        # Ensure that the output and the labels have the same batch size
+        if output.size(0) != label.size(0):
+            raise ValueError(f"Batch size mismatch: output batch size {output.size(0)} != label batch size {label.size(0)}")
 
         loss = criterion(output, label)
         loss.backward()
@@ -84,9 +88,9 @@ def valid_one_epoch(net, criterion, loader, label_type, nclass = 3, use_cuda = T
         for batchid, (coord, ener, label, event) in enumerate(loader):
             batch_size = len(event)
             if use_cuda:
-                ener, label = ener.cuda(), label.cuda()
+                coord, ener, label = coord.cuda(), ener.cuda(), label.cuda()
 
-            output = net.forward((coord, ener, batch_size))
+            output = net(coord, ener, batch_size)
 
             loss = criterion(output, label)
 
@@ -222,7 +226,7 @@ def predict_gen(data_path, net, label_type, batch_size, nevents, use_cuda = True
                 out_dict = dict(
                     label = label.cpu().detach().numpy(),
                     dataset_id = event,
-                    prediction = y_pred)
+                    predictions = y_pred)
 
             elif label_type == LabelType.Segmentation:
                 # event is a vector of batch_size

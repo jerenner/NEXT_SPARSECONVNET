@@ -109,7 +109,8 @@ def calculate_output_dimension(spatial_size, kernel_sizes, stride_sizes):
     out_dim = []
     for o in spatial_size:
         for i, k in enumerate(kernel_sizes[:-1]):
+            #print(f"Spatial size {o}, kernel size {k}, stride {stride_sizes[i]}, at i = {i} gives {(o-k)/stride_sizes[i]+1}")
             o = (o - k)/stride_sizes[i] + 1
-            assert o == int(o), 'Shape mismatch: kernel size {} in level {} does not return a suitable size for the output'.format(k, i)
+            assert o == int(o), 'Shape mismatch: kernel size {}, spatial size {}, stride {} in level {} does not return a suitable size for the output'.format(k, o, stride_sizes[i], i)
         out_dim.append(int(o))
     return out_dim
