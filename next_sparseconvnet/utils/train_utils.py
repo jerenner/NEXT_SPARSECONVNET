@@ -38,7 +38,7 @@ def train_one_epoch(epoch_id, net, criterion, optimizer, loader, label_type, ncl
         metrics = accuracy
         met_epoch = 0
     for batchid, (coord, ener, label, event) in enumerate(loader):
-        print(f"PROCESSING BATCH {batchid}")
+        #print(f"PROCESSING BATCH {batchid}")
         batch_size = len(event)
         if use_cuda:
             coord, ener, label = coord.cuda(), ener.cuda(), label.cuda()
@@ -60,6 +60,9 @@ def train_one_epoch(epoch_id, net, criterion, optimizer, loader, label_type, ncl
         softmax = torch.nn.Softmax(dim = 1)
         prediction = torch.argmax(softmax(output), 1)
         met_epoch += metrics(label.cpu(), prediction.cpu(), nclass=nclass)
+
+        print(f"-- Batch {batchid}/{len(loader)}: running avg. loss = {loss_epoch/(batchid+1)}")
+        sys.stdout.flush()
 
     loss_epoch = loss_epoch / len(loader)
     met_epoch = met_epoch / len(loader)
@@ -124,6 +127,7 @@ def train_net(*,
               net,
               criterion,
               optimizer,
+              scheduler,
               label_type,
               checkpoint_dir,
               tensorboard_dir,
@@ -158,6 +162,9 @@ def train_net(*,
     for i in range(nepoch):
         train_loss, train_met = train_one_epoch(i, net, criterion, optimizer, loader_train, label_type, use_cuda = use_cuda)
         valid_loss, valid_met = valid_one_epoch(net, criterion, loader_valid, label_type, use_cuda = use_cuda)
+
+        # Update the scheduler based on the validation loss.
+        scheduler.step(valid_loss)
 
         if valid_loss < start_loss:
             save_checkpoint({'state_dict': net.state_dict(),

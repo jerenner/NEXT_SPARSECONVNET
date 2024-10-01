@@ -34,7 +34,7 @@ class DataGen_classification(torch.utils.data.Dataset):
 
 
 class DataGen(torch.utils.data.Dataset):
-    def __init__(self, filename, label_type, nevents=None, augmentation = False):
+    def __init__(self, filename, label_type, nevents=None, augmentation = False, normalize_energy = True):
         """ This class yields events from pregenerated MC file.
         Parameters:
             filename : str; filename to read
@@ -49,6 +49,7 @@ class DataGen(torch.utils.data.Dataset):
         self.bininfo    = load_dst(filename, 'DATASET', 'BinsInfo')
         self.h5in = None
         self.augmentation = augmentation
+        self.normalize_energy = normalize_energy
         self.maxbins = [self.bininfo['nbins_x'][0], self.bininfo['nbins_y'][0], self.bininfo['nbins_z'][0]]
 
     def __getitem__(self, idx):
@@ -56,8 +57,17 @@ class DataGen(torch.utils.data.Dataset):
         if self.h5in is None:#this opens a table once getitem gets called
             self.h5in = tb.open_file(self.filename, 'r')
         hits  = self.h5in.root.DATASET.Voxels.read_where('dataset_id==idx_')
+
         if self.augmentation:
             transform_input(hits, self.maxbins)
+
+        # Normalize energy if the flag is enabled
+        if self.normalize_energy:
+            total_energy = hits['energy'].sum()
+            if total_energy > 0:  # Avoid division by zero
+                print(f"Normalizing by {total_energy}")
+                hits['energy'] /= total_energy
+
         if self.label_type == LabelType.Classification:
             label = np.unique(hits['binclass'])
         elif self.label_type == LabelType.Segmentation:

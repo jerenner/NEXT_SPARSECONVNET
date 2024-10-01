@@ -20,7 +20,7 @@ from invisible_cities.core.configure import configure
 from . import dataset_labeling_utils as utils
 
 
-def get_MCtables(filename, config, start_id=0):
+def get_MCtables(filename, config, start_id = 0, energy_min = 2.40, energy_max = 2.55):
     pathname, basename = os.path.split(filename)
     min_x, max_x = config.xlim
     min_y, max_y = config.ylim
@@ -31,8 +31,10 @@ def get_MCtables(filename, config, start_id=0):
     bins = (bins_x, bins_y, bins_z)
 
     hits      = mio.load_mchits_df(filename)
-    #select ACTIVE hits
+    
+    # select ACTIVE hits
     hits = hits[hits.label=='ACTIVE']
+
     particles = mio.load_mcparticles_df(filename)
 
     if config.classification and config.segmentation:
@@ -46,6 +48,21 @@ def get_MCtables(filename, config, start_id=0):
         hits = hits.reset_index()[['event_id', 'x', 'y', 'z', 'energy']]
     hits = utils.get_bin_indices(hits, bins, Rmax=config.Rmax)
     hits = hits.sort_values('event_id')
+
+    # -----------------------------------------------------------------------------
+    # Group by event_id and calculate the total energy per event
+    total_energy_per_event = hits.groupby('event_id')['energy'].sum().reset_index()
+
+    # Filter events with total energy in the specified range
+    valid_events = total_energy_per_event[
+        (total_energy_per_event['energy'] >= energy_min) &
+        (total_energy_per_event['energy'] <= energy_max)
+    ]['event_id']
+
+    # Filter the hits DataFrame to only include events in the energy range
+    hits = hits[hits['event_id'].isin(valid_events)]
+    # ----------------------------------------------------------------------------
+
     eventInfo = hits[['event_id', 'binclass']].drop_duplicates().reset_index(drop=True)
     #create new unique identifier
     dct_map = {eventInfo.iloc[i].event_id : i+start_id for i in range(len(eventInfo))}

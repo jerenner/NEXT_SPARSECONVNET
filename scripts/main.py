@@ -29,6 +29,7 @@ from next_sparseconvnet.utils.train_utils      import train_net
 from next_sparseconvnet.utils.train_utils      import predict_gen
 from next_sparseconvnet.utils.focal_loss       import FocalLoss
 
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.nn.parallel.scatter_gather import scatter
 
 # Custom DataParallel
@@ -148,6 +149,7 @@ if __name__ == '__main__':
         # Check for multiple GPUs
         if torch.cuda.device_count() > 1:
             print(f"Using {torch.cuda.device_count()} GPUs!")
+            net = net.to('cuda:0')
             net = CustomDataParallel(net, device_ids=[0, 1, 2, 3])
         net = net.cuda()
 
@@ -193,6 +195,7 @@ if __name__ == '__main__':
                                      betas = parameters.betas,
                                      eps = parameters.eps,
                                      weight_decay = parameters.weight_decay)
+        scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
 
         train_net(nepoch = parameters.nepoch,
                   train_data_path = parameters.train_file,
@@ -203,6 +206,7 @@ if __name__ == '__main__':
                   label_type = parameters.labeltype,
                   criterion = criterion,
                   optimizer = optimizer,
+                  scheduler = scheduler,
                   checkpoint_dir = parameters.checkpoint_dir,
                   tensorboard_dir = parameters.tensorboard_dir,
                   num_workers = parameters.num_workers,
