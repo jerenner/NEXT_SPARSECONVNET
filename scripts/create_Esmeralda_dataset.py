@@ -18,7 +18,7 @@ from invisible_cities.io import dst_io    as dio
 
 from invisible_cities.core  .configure import configure
 from invisible_cities.cities.components import index_tables
-from next_sparseconvnet.data_io_scripts import MC_dataset_table_utils as mcutils
+from next_sparseconvnet.data_io_scripts import Esmeralda_dataset_table_utils as chit_utils
 
 if __name__ == "__main__":
     config  = configure(sys.argv).as_namespace
@@ -29,7 +29,7 @@ if __name__ == "__main__":
         raise Exception('output file exists, please remove it manually')
     for i, f in enumerate(filesin):
         print(i, f)
-        eventInfo, binsInfo, hits = get_CHITtables(f, config, start_id)
+        eventInfo, binsInfo, hits = chit_utils.get_CHITtables(f, config, start_id)
         start_id += len(eventInfo)
         with tb.open_file(fout, 'a') as h5out:
             dio.df_writer(h5out, eventInfo, 'DATASET', 'EventsInfo', columns_to_index=['dataset_id'], str_col_length=64)
