@@ -226,7 +226,7 @@ def predict_gen(data_path, net, label_type, batch_size, nevents, use_cuda = True
             batch_size = len(event)
             if use_cuda:
                 ener, label = ener.cuda(), label.cuda()
-            output = net.forward((coord, ener, batch_size))
+            output = net.forward(coord, ener, batch_size)
             y_pred = softmax(output).cpu().detach().numpy()
 
             if label_type == LabelType.Classification:

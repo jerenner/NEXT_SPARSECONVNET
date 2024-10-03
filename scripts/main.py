@@ -147,10 +147,10 @@ if __name__ == '__main__':
                      momentum = parameters.momentum,
                      nlinear = parameters.nlinear)
         # Check for multiple GPUs
-        if torch.cuda.device_count() > 1:
-            print(f"Using {torch.cuda.device_count()} GPUs!")
-            net = net.to('cuda:0')
-            net = CustomDataParallel(net, device_ids=[0, 1, 2, 3])
+        #if torch.cuda.device_count() > 1:
+        #    print(f"Using {torch.cuda.device_count()} GPUs!")
+        #    net = net.to('cuda:0')
+        #    net = CustomDataParallel(net, device_ids=[0, 1, 2, 3])
         net = net.cuda()
 
     print('net constructed')
