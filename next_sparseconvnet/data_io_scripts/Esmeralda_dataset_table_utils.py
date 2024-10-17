@@ -20,7 +20,7 @@ from invisible_cities.core.configure import configure
 from . import dataset_labeling_utils as utils
 
 
-def get_CHITtables(esmeralda_output, config, start_id = 0, energy_min = 2.40, energy_max = 2.55, mc_data_factor = 0.79896):
+def get_CHITtables(esmeralda_output, config, start_id = 0, energy_min = 2.40, energy_max = 2.55, mc_data_factor = 1.0):
     """
     This function processes CHITS from Esmeralda output and voxelizes them for the sparse CNN.
     """
@@ -55,6 +55,7 @@ def get_CHITtables(esmeralda_output, config, start_id = 0, energy_min = 2.40, en
         (total_energy_per_event['energy']*mc_data_factor >= energy_min) &
         (total_energy_per_event['energy']*mc_data_factor <= energy_max)
     ]['event_id']
+    print(f"Filtered events: {len(valid_events)} out of total {len(total_energy_per_event)}")
 
     # Filter the chits DataFrame to only include events in the energy range
     chits_events_df = chits_events_df[chits_events_df['event_id'].isin(valid_events)]
@@ -65,7 +66,7 @@ def get_CHITtables(esmeralda_output, config, start_id = 0, energy_min = 2.40, en
     chits_events_df = chits_events_df.sort_values('event_id')
 
     # Prepare event information and assign unique dataset IDs
-    eventInfo = chits_events_df[['event_id']].drop_duplicates().reset_index(drop=True)
+    eventInfo = chits_events_df[['event_id', 'binclass']].drop_duplicates().reset_index(drop=True)
     dct_map = {eventInfo.iloc[i].event_id: i + start_id for i in range(len(eventInfo))}
     eventInfo = eventInfo.assign(dataset_id=eventInfo.event_id.map(dct_map))
 

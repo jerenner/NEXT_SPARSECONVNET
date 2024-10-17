@@ -5,7 +5,7 @@ stride_sizes = [4, 2, 2, 2, 2]
 
 print_all = False
 
-for n in np.arange(543,851):
+for n in np.arange(100,351):
     
     if(print_all): print(f"** N = {n}\n")
     

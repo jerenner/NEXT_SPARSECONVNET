@@ -65,7 +65,7 @@ class DataGen(torch.utils.data.Dataset):
         if self.normalize_energy:
             total_energy = hits['energy'].sum()
             if total_energy > 0:  # Avoid division by zero
-                print(f"Normalizing by {total_energy}")
+                #print(f"Normalizing by {total_energy}")
                 hits['energy'] /= total_energy
 
         if self.label_type == LabelType.Classification:
