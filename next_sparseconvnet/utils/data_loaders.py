@@ -50,7 +50,7 @@ class DataGen(torch.utils.data.Dataset):
         self.h5in = None
         self.augmentation = augmentation
         self.normalize_energy = normalize_energy
-        self.maxbins = [self.bininfo['nbins_x'][0], self.bininfo['nbins_y'][0], self.bininfo['nbins_z'][0]]
+        self.maxbins = [int(self.bininfo['nbins_x'][0]), int(self.bininfo['nbins_y'][0]), int(self.bininfo['nbins_z'][0])]
 
     def __getitem__(self, idx):
         idx_ = self.events.iloc[idx].dataset_id

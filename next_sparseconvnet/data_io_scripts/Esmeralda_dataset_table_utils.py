@@ -37,7 +37,8 @@ def get_CHITtables(esmeralda_output, config, start_id = 0, energy_min = 2.40, en
     # Read the CHITS from the Esmeralda file
     chits_events_df = None
     with tb.open_file(esmeralda_output, 'r') as hdf:
-        chits_events_df = pd.DataFrame.from_records(hdf.root['CHITS']['highTh'][:])
+        #chits_events_df = pd.DataFrame.from_records(hdf.root['CHITS']['highTh'][:])
+        chits_events_df = pd.DataFrame.from_records(hdf.root['RECO']['Events'][:])  # for Sophronia hits
 
     # Select only relevant columns (e.g., X, Y, Z, energy)
     chits_events_df = chits_events_df[['event', 'X', 'Y', 'Z', 'Ec']].rename(columns={'event': 'event_id', 'X': 'x', 'Y': 'y', 'Z': 'z', 'Ec': 'energy'})
