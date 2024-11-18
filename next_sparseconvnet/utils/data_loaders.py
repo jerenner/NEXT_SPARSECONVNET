@@ -63,6 +63,7 @@ class DataGen(torch.utils.data.Dataset):
 
         # Normalize energy if the flag is enabled
         if self.normalize_energy:
+            #hits['energy'] = 1  # for uniform-energy test
             total_energy = hits['energy'].sum()
             if total_energy > 0:  # Avoid division by zero
                 #print(f"Normalizing by {total_energy}")
