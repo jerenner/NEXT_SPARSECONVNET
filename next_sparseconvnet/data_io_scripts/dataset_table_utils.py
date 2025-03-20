@@ -20,9 +20,9 @@ from invisible_cities.core.configure import configure
 from . import dataset_labeling_utils as utils
 
 
-def get_CHITtables(esmeralda_output, config, start_id = 0, energy_min = 2.40, energy_max = 2.55, mc_data_factor = 1.0):
+def get_hit_tables(esmeralda_output, config, city = 'sophronia', start_id = 0, energy_min = 2.40, energy_max = 2.55, mc_data_factor = 1.0):
     """
-    This function processes CHITS from Esmeralda output and voxelizes them for the sparse CNN.
+    This function processes CHITS from Esmeralda output or RECO hits from Sophronia output and voxelizes them for the sparse CNN.
     """
 
     # Define bins for voxelization
@@ -37,8 +37,10 @@ def get_CHITtables(esmeralda_output, config, start_id = 0, energy_min = 2.40, en
     # Read the CHITS from the Esmeralda file
     chits_events_df = None
     with tb.open_file(esmeralda_output, 'r') as hdf:
-        #chits_events_df = pd.DataFrame.from_records(hdf.root['CHITS']['highTh'][:])
-        chits_events_df = pd.DataFrame.from_records(hdf.root['RECO']['Events'][:])  # for Sophronia hits
+        if(city == 'esmeralda'):
+            chits_events_df = pd.DataFrame.from_records(hdf.root['CHITS']['highTh'][:]) # for Esmeralda hits
+        else:
+            chits_events_df = pd.DataFrame.from_records(hdf.root['RECO']['Events'][:])  # for Sophronia hits
 
     # Select only relevant columns (e.g., X, Y, Z, energy)
     chits_events_df = chits_events_df[['event', 'X', 'Y', 'Z', 'Ec']].rename(columns={'event': 'event_id', 'X': 'x', 'Y': 'y', 'Z': 'z', 'Ec': 'energy'})
@@ -57,6 +59,11 @@ def get_CHITtables(esmeralda_output, config, start_id = 0, energy_min = 2.40, en
         (total_energy_per_event['energy']*mc_data_factor <= energy_max)
     ]['event_id']
     print(f"Filtered events: {len(valid_events)} out of total {len(total_energy_per_event)}")
+
+    # Return Nones for empty file
+    if(len(valid_events) == 0):
+        print("*** WARNING: no valid events found in file ***")
+        return None, None, None
 
     # Filter the chits DataFrame to only include events in the energy range
     chits_events_df = chits_events_df[chits_events_df['event_id'].isin(valid_events)]

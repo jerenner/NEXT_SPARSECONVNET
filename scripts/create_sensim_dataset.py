@@ -33,11 +33,14 @@ def process_sensim_files(file_list, config, start_id=0, energy_min=2.4, energy_m
     min_x, max_x = -495., 495. #unique_x_sipm.min(), unique_x_sipm.max()
     min_y, max_y = -495., 495. #unique_y_sipm.min(), unique_y_sipm.max()
     min_z, max_z = 0., 1203. #unique_z_slices.min(), unique_z_slices.max()
+    print(f"x-slices (min,max) = ({unique_x_sipm.min()},{unique_x_sipm.max()})")
+    print(f"y-slices (min,max) = ({unique_y_sipm.min()},{unique_y_sipm.max()})")
+    print(f"z-slices (min,max) = ({unique_z_slices.min()},{unique_z_slices.max()})")
 
     # Infer uniform spacing based on the differences between unique values
     spacing_x = np.diff(unique_x_sipm).mean()*1  # Assuming uniform spacing
     spacing_y = np.diff(unique_y_sipm).mean()*1  # Assuming uniform spacing
-    spacing_z = np.diff(unique_z_slices).mean()*7 # Assuming uniform spacing 
+    spacing_z = np.diff(unique_z_slices).mean()*4.762 # Assuming uniform spacing 
 
     # Define bins for voxelization based on inferred min, max, and spacing
     bins_x = np.arange(min_x-spacing_x/2, max_x + 3*spacing_x/2, spacing_x)

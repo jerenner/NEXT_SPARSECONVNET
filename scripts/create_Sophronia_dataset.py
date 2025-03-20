@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-This script creates hdf5 files from Esmeralda output that contains:
+This script creates hdf5 files from Sophronia output that contains:
  - DATASET/BinClassHits - voxelized hits table with labels (binary classification)
  - DATASET/SegClassHits - voxelized hits table with labels (segmentation)
  - DATASET/BinInfo      - table that stores info about bins
@@ -28,11 +28,12 @@ if __name__ == "__main__":
     if os.path.isfile(fout):
         raise Exception('output file exists, please remove it manually')
     for i, f in enumerate(filesin):
-        print(i, f)
-        eventInfo, binsInfo, hits = hit_utils.get_hit_tables(f, config, city = 'esmeralda', start_id = start_id)
-        start_id += len(eventInfo)
-        with tb.open_file(fout, 'a') as h5out:
-            dio.df_writer(h5out, eventInfo, 'DATASET', 'EventsInfo', columns_to_index=['dataset_id'], str_col_length=64)
-            dio.df_writer(h5out, binsInfo , 'DATASET', 'BinsInfo')
-            dio.df_writer(h5out, hits     , 'DATASET', 'Voxels', columns_to_index=['dataset_id'])
+        print(i, f, flush=True)
+        eventInfo, binsInfo, hits = hit_utils.get_hit_tables(f, config, city = 'sophronia', start_id = start_id)
+        if(eventInfo is not None):
+            start_id += len(eventInfo)
+            with tb.open_file(fout, 'a') as h5out:
+                dio.df_writer(h5out, eventInfo, 'DATASET', 'EventsInfo', columns_to_index=['dataset_id'], str_col_length=64)
+                dio.df_writer(h5out, binsInfo , 'DATASET', 'BinsInfo')
+                dio.df_writer(h5out, hits     , 'DATASET', 'Voxels', columns_to_index=['dataset_id'])
     index_tables(fout)
